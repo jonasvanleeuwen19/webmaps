@@ -231,13 +231,13 @@ function normalizeShopElement(element) {
 async function loadShopsInView() {
   const bounds = map.getBounds();
   const query = `
-    [out:json][timeout:25];
+    [out:json][timeout:15];
     (
       node["shop"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
       way["shop"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
       relation["shop"](${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()});
     );
-    out center tags 250;
+    out center tags 150;
   `;
 
   const response = await fetch("https://overpass-api.de/api/interpreter", {
@@ -354,7 +354,7 @@ searchInput.addEventListener("input", () => {
       format: "jsonv2",
       limit: "8",
       addressdetails: "1",
-      accept-language: "en",
+      "accept-language": "en",
     });
 
     const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`);
