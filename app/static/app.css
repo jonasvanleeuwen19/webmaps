@@ -1,3 +1,82 @@
+:root {
+  --left-panel-width: 20rem;
+  --left-panel-collapsed-width: 0.75rem;
+  --control-top-offset: 0.75rem;
+}
+
 #map {
   z-index: 1;
+}
+
+#map .leaflet-control-zoom a,
+#map .leaflet-control-layers-toggle {
+  background-color: #0f172a;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+
+#map .leaflet-control-layers,
+#map .leaflet-bar {
+  border: 1px solid #334155;
+  box-shadow: 0 10px 20px rgb(2 6 23 / 0.35);
+}
+
+#map .leaflet-popup-content-wrapper,
+#map .leaflet-popup-tip {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+#map .leaflet-top.leaflet-left {
+  left: calc(var(--left-panel-width) + 0.75rem);
+  top: var(--control-top-offset);
+}
+
+body.left-collapsed #map .leaflet-top.leaflet-left {
+  left: calc(var(--left-panel-collapsed-width) + 0.75rem);
+}
+
+#map .leaflet-bottom.leaflet-right {
+  margin-bottom: 0.75rem;
+  margin-right: 0.75rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 0.75rem;
+  align-items: start;
+}
+
+.info-label {
+  color: #94a3b8;
+}
+
+.info-value {
+  color: #e2e8f0;
+  word-break: break-word;
+}
+
+.route-button {
+  width: 100%;
+  border: 1px solid #0e7490;
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.8rem;
+  background: #155e75;
+  color: #ecfeff;
+  transition: background 0.15s ease;
+}
+
+.route-button:hover {
+  background: #0e7490;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --left-panel-width: 17rem;
+  }
+
+  #infoPanel {
+    width: min(21rem, 88vw);
+  }
 }

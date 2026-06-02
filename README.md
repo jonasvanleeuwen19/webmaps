@@ -1,16 +1,18 @@
 # webmaps
 
-Lightweight self-hosted browser maps app built with FastAPI + Leaflet.
-The current default UI language is Dutch (Nederlands).
+Lightweight self-hosted browser maps app built as a static Leaflet frontend, served by FastAPI.
+The UI is fully in English and optimized for dark mode.
 
 ## Features
 
-- Full-page interactive map with clean UI
-- Collapsible sidebar
-- Top-right search bar (Nominatim geocoding)
-- Route navigation between two points (OSRM)
-- Nearby shop markers for current map view (Overpass / OpenStreetMap)
-- Toggleable map styles (including OpenMapTiles-compatible style source)
+- Fully static HTML/CSS/JS frontend (no backend tracking or proxy API routes)
+- Full-page interactive map with integrated left control sidebar and right place details sidebar
+- Dark-first UI with Font Awesome icons
+- Geolocation-first startup for nearby map focus
+- Search with Nominatim geocoding
+- Route navigation from your current location to a selected destination (OSRM)
+- Nearby shop markers in current map view with richer metadata (Overpass + optional Wikipedia summary)
+- Bottom-right layer switcher and improved map control placement
 - Single-container deployment with Docker
 
 ## Run locally
