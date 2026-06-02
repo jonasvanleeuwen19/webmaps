@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebMaps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="/static/app.css" />
+  </head>
+  <body class="h-screen w-screen overflow-hidden bg-slate-100 text-slate-900">
+    <div class="relative h-full w-full">
+      <aside
+        id="sidebar"
+        class="absolute left-0 top-0 z-[1000] flex h-full w-80 flex-col border-r border-slate-200 bg-white/95 transition-transform"
+      >
+        <div class="flex items-center justify-between border-b border-slate-200 p-4">
+          <div>
+            <h1 class="text-lg font-semibold">WebMaps</h1>
+            <p class="text-xs text-slate-500">OpenStreetMap tools</p>
+          </div>
+          <button id="toggleSidebar" class="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-100">
+            Inklappen
+          </button>
+        </div>
+
+        <div class="space-y-4 overflow-y-auto p-4 text-sm">
+          <section class="space-y-2">
+            <h2 class="font-medium">Zoeken</h2>
+            <p class="text-xs text-slate-500">Gebruik de zoekbalk rechtsboven.</p>
+          </section>
+
+          <section class="space-y-2">
+            <h2 class="font-medium">Routing</h2>
+            <p class="text-xs text-slate-500">Klik 2 punten op de kaart om een route te maken.</p>
+            <button id="clearRoute" class="w-full rounded border border-slate-300 px-3 py-2 text-left hover:bg-slate-100">
+              Route wissen
+            </button>
+          </section>
+
+          <section class="space-y-2">
+            <h2 class="font-medium">Winkels</h2>
+            <button id="loadShops" class="w-full rounded border border-slate-300 px-3 py-2 text-left hover:bg-slate-100">
+              Toon winkels in beeld
+            </button>
+            <button id="clearShops" class="w-full rounded border border-slate-300 px-3 py-2 text-left hover:bg-slate-100">
+              Verberg winkels
+            </button>
+          </section>
+
+          <section class="space-y-2">
+            <h2 class="font-medium">Kaartlagen</h2>
+            <p class="text-xs text-slate-500">Gebruik rechtsboven de layer-knop.</p>
+          </section>
+        </div>
+      </aside>
+
+      <button
+        id="expandSidebar"
+        class="absolute left-3 top-3 z-[1001] hidden rounded border border-slate-300 bg-white px-3 py-2 text-xs"
+      >
+        Sidebar openen
+      </button>
+
+      <div class="absolute right-3 top-3 z-[1001] flex w-[min(30rem,90vw)] flex-col gap-2">
+        <div class="rounded border border-slate-300 bg-white p-2 shadow-sm">
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Zoek locaties, winkels, adressen..."
+            class="w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+          />
+        </div>
+        <div id="searchResults" class="hidden max-h-64 overflow-auto rounded border border-slate-300 bg-white p-2 shadow-sm"></div>
+      </div>
+
+      <div id="map" class="h-full w-full"></div>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
