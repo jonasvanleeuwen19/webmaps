@@ -32,6 +32,33 @@ let searchTimeout = null;
 let selectedPlace = null;
 let currentLocation = null;
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function sanitizeHttpUrl(value, { hosts = [] } = {}) {
+  if (!value) return null;
+  if (String(value).length > 2048) return null;
+  if (/^\s*javascript:/i.test(String(value))) return null;
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "https:") return null;
+    if (hosts.length && !hosts.includes(parsed.hostname)) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+
+  function isValidCoordinates(lat, lng) {
+    return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+  }
+}
+
 function boolTag(value) {
   if (!value) return "Unknown";
   if (value === "yes") return "Yes";
@@ -80,13 +107,17 @@ async function fetchSummaryFromTitle(title) {
   if (!title) return null;
   const response = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
   if (!response.ok) return null;
-  const data = await response.json();
-  return {
-    title: data.title || title,
-    extract: data.extract || null,
-    image: data.thumbnail?.source || null,
-    page: data.content_urls?.desktop?.page || null,
-  };
+  try {
+    const data = await response.json();
+    return {
+      title: data.title || title,
+      extract: data.extract || null,
+      image: data.thumbnail?.source || null,
+      page: data.content_urls?.desktop?.page || null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function fetchWikipediaSummary(place) {
@@ -125,6 +156,7 @@ async function fetchWikipediaSummary(place) {
 }
 
 async function fetchCommonsPhoto(lat, lng) {
+  if (!isValidCoordinates(lat, lng)) return null;
   try {
     const params = new URLSearchParams({
       action: "query",
@@ -154,6 +186,7 @@ async function fetchCommonsPhoto(lat, lng) {
 }
 
 async function fetchReverseDetails(lat, lng) {
+  if (!isValidCoordinates(lat, lng)) return null;
   try {
     const params = new URLSearchParams({
       format: "jsonv2",
@@ -177,27 +210,29 @@ function formatAddress(place) {
 
 function renderInfo(place) {
   selectedPlace = place;
-  const title = place.name || "Selected place";
+  const title = escapeHtml(place.name || "Selected place");
   infoTitle.innerHTML = `<i class="fa-solid fa-location-dot mr-2 text-cyan-400"></i>${title}`;
 
-  const website = place.tags?.website || place.tags?.["contact:website"];
-  const openingHours = place.tags?.opening_hours || "Unknown";
-  const wifi = boolTag(place.tags?.internet_access);
-  const wheelchair = boolTag(place.tags?.wheelchair);
-  const phone = place.tags?.phone || place.tags?.["contact:phone"] || "Unknown";
+  const website = sanitizeHttpUrl(place.tags?.website || place.tags?.["contact:website"]);
+  const openingHours = escapeHtml(place.tags?.opening_hours || "Unknown");
+  const wifi = escapeHtml(boolTag(place.tags?.internet_access));
+  const wheelchair = escapeHtml(boolTag(place.tags?.wheelchair));
+  const phone = escapeHtml(place.tags?.phone || place.tags?.["contact:phone"] || "Unknown");
+  const type = escapeHtml(place.shop || place.type || "Place");
+  const address = escapeHtml(formatAddress(place));
 
   infoContent.innerHTML = `
     <div class="space-y-3">
       <button id="routeToPlace" class="route-button"><i class="fa-solid fa-route mr-2"></i>Route to here</button>
       <div class="info-grid text-sm">
-        <span class="info-label">Type</span><span class="info-value">${place.shop || place.type || "Place"}</span>
-        <span class="info-label">Address</span><span class="info-value">${formatAddress(place)}</span>
+        <span class="info-label">Type</span><span class="info-value">${type}</span>
+        <span class="info-label">Address</span><span class="info-value">${address}</span>
         <span class="info-label">Open</span><span class="info-value">${openingHours}</span>
         <span class="info-label">Wi-Fi</span><span class="info-value">${wifi}</span>
         <span class="info-label">Wheelchair</span><span class="info-value">${wheelchair}</span>
         <span class="info-label">Phone</span><span class="info-value">${phone}</span>
         <span class="info-label">Website</span>
-        <span class="info-value">${website ? `<a class="text-cyan-400 underline" href="${website}" target="_blank" rel="noopener noreferrer">Open website</a>` : "Unknown"}</span>
+        <span class="info-value">${website ? `<a class="text-cyan-400 underline" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer">Open website</a>` : "Unknown"}</span>
       </div>
       <div id="descriptionBox" class="rounded border border-slate-700 bg-slate-900 p-3 text-slate-300">
         <p class="text-slate-400">Loading description…</p>
@@ -225,26 +260,40 @@ function renderInfo(place) {
   ]).then(([wiki, commons, reverse]) => {
     const box = document.getElementById("descriptionBox");
     if (!box) return;
-    box.innerHTML = wiki?.extract ? `<p>${wiki.extract}</p>` : '<p class="text-slate-400">No external description available.</p>';
+    box.innerHTML = wiki?.extract
+      ? `<p>${escapeHtml(wiki.extract)}</p>`
+      : '<p class="text-slate-400">No external description available.</p>';
 
     const sourceBox = document.getElementById("sourceBox");
     if (sourceBox) {
-      const reverseLabel = reverse?.display_name ? `<div><span class="text-slate-500">OSM reverse:</span> ${reverse.display_name}</div>` : "";
-      const osmLink = `<a class="text-cyan-400 underline" href="https://www.openstreetmap.org/?mlat=${place.latlng.lat}&mlon=${place.latlng.lng}#map=18/${place.latlng.lat}/${place.latlng.lng}" target="_blank" rel="noopener noreferrer">View on OpenStreetMap</a>`;
-      const wikiLink = wiki?.page
-        ? `<a class="text-cyan-400 underline" href="${wiki.page}" target="_blank" rel="noopener noreferrer">Wikipedia page</a>`
+      const safeWikiPage = sanitizeHttpUrl(wiki?.page, { hosts: ["en.wikipedia.org", "wikipedia.org"] });
+      const reverseLabel = reverse?.display_name
+        ? `<div><span class="text-slate-500">OSM reverse:</span> ${escapeHtml(reverse.display_name)}</div>`
+        : "";
+      const osmLink = `<a class="text-cyan-400 underline" href="${escapeHtml(`https://www.openstreetmap.org/?mlat=${place.latlng.lat}&mlon=${place.latlng.lng}#map=18/${place.latlng.lat}/${place.latlng.lng}`)}" target="_blank" rel="noopener noreferrer">View on OpenStreetMap</a>`;
+      const wikiLink = safeWikiPage
+        ? `<a class="text-cyan-400 underline" href="${escapeHtml(safeWikiPage)}" target="_blank" rel="noopener noreferrer">Wikipedia page</a>`
         : "";
       sourceBox.innerHTML = [reverseLabel, osmLink, wikiLink].filter(Boolean).join("<br/>") || "No extra source links available.";
     }
 
-    const imageUrl = wiki?.image || commons?.image;
-    const imageLink = wiki?.page || commons?.page || "#";
+    const imageUrl =
+      sanitizeHttpUrl(wiki?.image, {
+        hosts: ["upload.wikimedia.org", "commons.wikimedia.org"],
+      }) ||
+      sanitizeHttpUrl(commons?.image, {
+        hosts: ["upload.wikimedia.org", "commons.wikimedia.org"],
+      });
+    const imageLink =
+      sanitizeHttpUrl(wiki?.page, { hosts: ["en.wikipedia.org", "wikipedia.org"] }) ||
+      sanitizeHttpUrl(commons?.page, { hosts: ["commons.wikimedia.org"] }) ||
+      "#";
     const photoBox = document.getElementById("photoBox");
     const photoImage = document.getElementById("photoImage");
     const photoLink = document.getElementById("photoLink");
     if (photoBox && photoImage && photoLink && imageUrl) {
       photoImage.src = imageUrl;
-      photoImage.alt = wiki?.title || commons?.title || "Location photo";
+      photoImage.alt = escapeHtml(wiki?.title || commons?.title || "Location photo");
       photoLink.href = imageLink;
       photoBox.classList.remove("hidden");
     }
@@ -281,7 +330,7 @@ async function routeToSelectedPlace() {
   routeLayer.addData({ type: "Feature", geometry: route, properties: {} });
 
   routePins.addLayer(L.marker([start.lat, start.lng]).bindPopup("Your location"));
-  routePins.addLayer(L.marker([end.lat, end.lng]).bindPopup(selectedPlace.name || "Destination"));
+  routePins.addLayer(L.marker([end.lat, end.lng]).bindPopup(escapeHtml(selectedPlace.name || "Destination")));
 
   const distanceKm = (data.routes[0].distance / 1000).toFixed(1);
   const durationMin = Math.round(data.routes[0].duration / 60);
@@ -344,13 +393,14 @@ async function loadShopsInView() {
       weight: 2,
     });
 
-    marker.bindPopup(`<strong>${shop.name}</strong><br/>${shop.shop}`);
+    marker.bindPopup(`<strong>${escapeHtml(shop.name)}</strong><br/>${escapeHtml(shop.shop)}`);
     marker.on("click", () => renderInfo(shop));
     shopLayer.addLayer(marker);
   }
 }
 
 async function fetchNearestNamedPlace(lat, lng) {
+  if (!isValidCoordinates(lat, lng)) return null;
   const query = `
     [out:json][timeout:20];
     (
@@ -466,7 +516,7 @@ function rankSearchItems(query, items) {
   const unique = [];
   const seen = new Set();
   for (const item of [...ranked, ...items]) {
-    const key = `${item.title}-${item.lat.toFixed(5)}-${item.lon.toFixed(5)}`;
+    const key = `${item.title}|${item.lat.toFixed(5)}|${item.lon.toFixed(5)}`;
     if (seen.has(key)) continue;
     seen.add(key);
     unique.push(item);
@@ -483,15 +533,15 @@ function showSearchResults(items) {
     const row = document.createElement("button");
     row.className = "block w-full rounded p-2 text-left text-sm hover:bg-slate-800";
     row.innerHTML = `
-      <div class="truncate"><i class="fa-solid fa-location-crosshairs mr-2 text-cyan-400"></i>${item.display_name}</div>
-      <div class="mt-1 text-xs text-slate-400">${item.type} · ${item.source}</div>
+      <div class="truncate"><i class="fa-solid fa-location-crosshairs mr-2 text-cyan-400"></i>${escapeHtml(item.display_name)}</div>
+      <div class="mt-1 text-xs text-slate-400">${escapeHtml(item.type)} · ${escapeHtml(item.source)}</div>
     `;
     row.addEventListener("click", () => {
       const lat = Number(item.lat);
       const lng = Number(item.lon);
       searchPins.clearLayers();
       const marker = L.marker([lat, lng]).addTo(searchPins);
-      marker.bindPopup(item.display_name).openPopup();
+      marker.bindPopup(escapeHtml(item.display_name)).openPopup();
       map.setView([lat, lng], 15);
 
       const place = {
@@ -547,7 +597,10 @@ map.on("click", async (event) => {
       latlng: { lat: event.latlng.lat, lng: event.latlng.lng },
     };
   searchPins.clearLayers();
-  L.marker([place.latlng.lat, place.latlng.lng]).addTo(searchPins).bindPopup(place.name || "Selected place").openPopup();
+  L.marker([place.latlng.lat, place.latlng.lng])
+    .addTo(searchPins)
+    .bindPopup(escapeHtml(place.name || "Selected place"))
+    .openPopup();
   renderInfo(place);
 });
 
@@ -562,7 +615,8 @@ searchInput.addEventListener("input", () => {
   }
 
   searchTimeout = setTimeout(async () => {
-    const variants = [query, query.replace(/[^\p{L}\p{N}\s-]/gu, "").trim()].filter(Boolean);
+    const normalizedVariant = query.length >= 3 ? query.replace(/[^\p{L}\p{N}\s-]/gu, "").trim() : query;
+    const variants = [query, normalizedVariant].filter(Boolean);
     const [nominatimA, photonA, nominatimB, photonB] = await Promise.all([
       fetchNominatimSearch(variants[0]),
       fetchPhotonSearch(variants[0]),
