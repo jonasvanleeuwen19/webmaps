@@ -1,6 +1,7 @@
 # webmaps
 
 Lightweight self-hosted browser maps app built with FastAPI + Leaflet.
+The current default UI language is Dutch (Nederlands).
 
 ## Features
 

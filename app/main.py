@@ -15,7 +15,8 @@ templates = Jinja2Templates(directory="app/templates")
 NOMINATIM_URL = "https://nominatim.openstreetmap.org"
 OSRM_URL = "https://router.project-osrm.org"
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
-DEFAULT_HEADERS = {"User-Agent": "webmaps-fastapi/1.0"}
+DEFAULT_HEADERS = {"User-Agent": "webmaps-fastapi/1.0 (https://github.com/jonasvanleeuwen19/webmaps)"}
+COORDINATE_PATTERN = r"^-?\d+(\.\d+)?,-?\d+(\.\d+)?$"
 
 
 async def fetch_json(
@@ -57,8 +58,8 @@ async def search(
 
 @app.get("/api/route")
 async def route(
-    start: str = Query(..., pattern=r"^-?\d+(\.\d+)?,-?\d+(\.\d+)?$"),
-    end: str = Query(..., pattern=r"^-?\d+(\.\d+)?,-?\d+(\.\d+)?$"),
+    start: str = Query(..., pattern=COORDINATE_PATTERN),
+    end: str = Query(..., pattern=COORDINATE_PATTERN),
 ) -> Any:
     try:
         start_lat, start_lon = [float(x.strip()) for x in start.split(",")]

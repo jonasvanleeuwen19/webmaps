@@ -21,6 +21,7 @@ L.control.layers(layers).addTo(map);
 
 const routeLayer = L.geoJSON(null, { style: { color: "#2563eb", weight: 5 } }).addTo(map);
 const routePins = L.layerGroup().addTo(map);
+const searchPins = L.layerGroup().addTo(map);
 const shopLayer = L.geoJSON(null, {
   pointToLayer: (feature, latlng) =>
     L.circleMarker(latlng, { radius: 6, color: "#0f172a", fillColor: "#f97316", fillOpacity: 0.9, weight: 1 }),
@@ -131,7 +132,8 @@ searchInput.addEventListener("input", () => {
       row.addEventListener("click", () => {
         const lat = Number(item.lat);
         const lon = Number(item.lon);
-        const marker = L.marker([lat, lon]).addTo(map);
+        searchPins.clearLayers();
+        const marker = L.marker([lat, lon]).addTo(searchPins);
         marker.bindPopup(item.display_name).openPopup();
         map.setView([lat, lon], 15);
         searchResults.classList.add("hidden");
