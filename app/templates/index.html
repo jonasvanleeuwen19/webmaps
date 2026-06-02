@@ -24,6 +24,23 @@
   </head>
   <body class="h-screen w-screen overflow-hidden bg-slate-950 text-slate-100">
     <div class="relative h-full w-full">
+      <section
+        id="floatingSearch"
+        class="absolute right-3 top-3 z-[1002] w-[min(34rem,calc(100vw-1.5rem))] max-w-[34rem] rounded border border-slate-700 bg-slate-900/95 p-2 shadow-xl"
+      >
+        <label for="searchInput" class="sr-only">Search location</label>
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-magnifying-glass text-cyan-400"></i>
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Search places, landmarks, or shops..."
+            class="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-500"
+          />
+        </div>
+        <div id="searchResults" class="mt-2 hidden max-h-72 overflow-auto rounded border border-slate-700 bg-slate-900 p-2"></div>
+      </section>
+
       <aside
         id="sidebar"
         class="absolute left-0 top-0 z-[1000] flex h-full w-80 flex-col border-r border-slate-700 bg-slate-900/95 transition-transform"
@@ -43,20 +60,6 @@
         </div>
 
         <div class="space-y-4 overflow-y-auto p-4 text-sm">
-          <section class="space-y-2">
-            <h2 class="font-medium"><i class="fa-solid fa-magnifying-glass mr-2 text-cyan-400"></i>Search</h2>
-            <p class="text-xs text-slate-400">Find places, addresses, and shops with Nominatim.</p>
-            <div class="rounded border border-slate-700 bg-slate-900 p-2">
-              <input
-                id="searchInput"
-                type="text"
-                placeholder="Search places or shops..."
-                class="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-500"
-              />
-            </div>
-            <div id="searchResults" class="hidden max-h-60 overflow-auto rounded border border-slate-700 bg-slate-900 p-2"></div>
-          </section>
-
           <section class="space-y-2">
             <h2 class="font-medium"><i class="fa-solid fa-store mr-2 text-cyan-400"></i>Shops in view</h2>
             <button id="loadShops" class="w-full rounded border border-slate-700 px-3 py-2 text-left hover:bg-slate-800">
@@ -108,6 +111,7 @@
       crossorigin=""
     ></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.1.0"></script>
     <script src="/static/app.js"></script>
   </body>
 </html>
