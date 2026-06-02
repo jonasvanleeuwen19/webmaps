@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="nl">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,73 +11,93 @@
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""
     />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPVfKQhXNQTMfRyVX3pBnMFcV7oQPJkl9Qevg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <link rel="stylesheet" href="/static/app.css" />
   </head>
-  <body class="h-screen w-screen overflow-hidden bg-slate-100 text-slate-900">
+  <body class="h-screen w-screen overflow-hidden bg-slate-950 text-slate-100">
     <div class="relative h-full w-full">
       <aside
         id="sidebar"
-        class="absolute left-0 top-0 z-[1000] flex h-full w-80 flex-col border-r border-slate-200 bg-white/95 transition-transform"
+        class="absolute left-0 top-0 z-[1000] flex h-full w-80 flex-col border-r border-slate-700 bg-slate-900/95 transition-transform"
       >
-        <div class="flex items-center justify-between border-b border-slate-200 p-4">
+        <div class="flex items-center justify-between border-b border-slate-700 p-4">
           <div>
-            <h1 class="text-lg font-semibold">WebMaps</h1>
-            <p class="text-xs text-slate-500">OpenStreetMap tools</p>
+            <h1 class="text-lg font-semibold"><i class="fa-solid fa-map-location-dot mr-2 text-cyan-400"></i>WebMaps</h1>
+            <p class="text-xs text-slate-400">Fully static Leaflet experience</p>
           </div>
-          <button id="toggleSidebar" class="rounded border border-slate-300 px-2 py-1 text-xs hover:bg-slate-100">
-            Inklappen
+          <button
+            id="toggleSidebar"
+            class="rounded border border-slate-600 px-2 py-1 text-xs hover:bg-slate-800"
+            title="Collapse sidebar"
+          >
+            <i class="fa-solid fa-chevron-left"></i>
           </button>
         </div>
 
         <div class="space-y-4 overflow-y-auto p-4 text-sm">
           <section class="space-y-2">
-            <h2 class="font-medium">Zoeken</h2>
-            <p class="text-xs text-slate-500">Gebruik de zoekbalk rechtsboven.</p>
+            <h2 class="font-medium"><i class="fa-solid fa-magnifying-glass mr-2 text-cyan-400"></i>Search</h2>
+            <p class="text-xs text-slate-400">Find places, addresses, and shops with Nominatim.</p>
+            <div class="rounded border border-slate-700 bg-slate-900 p-2">
+              <input
+                id="searchInput"
+                type="text"
+                placeholder="Search places or shops..."
+                class="w-full rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-500"
+              />
+            </div>
+            <div id="searchResults" class="hidden max-h-60 overflow-auto rounded border border-slate-700 bg-slate-900 p-2"></div>
           </section>
 
           <section class="space-y-2">
-            <h2 class="font-medium">Routing</h2>
-            <p class="text-xs text-slate-500">Klik 2 punten op de kaart om een route te maken.</p>
-            <button id="clearRoute" class="w-full rounded border border-slate-300 px-3 py-2 text-left hover:bg-slate-100">
-              Route wissen
+            <h2 class="font-medium"><i class="fa-solid fa-store mr-2 text-cyan-400"></i>Shops in view</h2>
+            <button id="loadShops" class="w-full rounded border border-slate-700 px-3 py-2 text-left hover:bg-slate-800">
+              <i class="fa-solid fa-download mr-2"></i>Load nearby shops
+            </button>
+            <button id="clearShops" class="w-full rounded border border-slate-700 px-3 py-2 text-left hover:bg-slate-800">
+              <i class="fa-solid fa-broom mr-2"></i>Clear shops
             </button>
           </section>
 
           <section class="space-y-2">
-            <h2 class="font-medium">Winkels</h2>
-            <button id="loadShops" class="w-full rounded border border-slate-300 px-3 py-2 text-left hover:bg-slate-100">
-              Toon winkels in beeld
+            <h2 class="font-medium"><i class="fa-solid fa-route mr-2 text-cyan-400"></i>Routing</h2>
+            <p class="text-xs text-slate-400">Select any place and press Route to here in the right panel.</p>
+            <button id="clearRoute" class="w-full rounded border border-slate-700 px-3 py-2 text-left hover:bg-slate-800">
+              <i class="fa-solid fa-xmark mr-2"></i>Clear route
             </button>
-            <button id="clearShops" class="w-full rounded border border-slate-300 px-3 py-2 text-left hover:bg-slate-100">
-              Verberg winkels
-            </button>
-          </section>
-
-          <section class="space-y-2">
-            <h2 class="font-medium">Kaartlagen</h2>
-            <p class="text-xs text-slate-500">Gebruik rechtsboven de layer-knop.</p>
           </section>
         </div>
       </aside>
 
       <button
         id="expandSidebar"
-        class="absolute left-3 top-3 z-[1001] hidden rounded border border-slate-300 bg-white px-3 py-2 text-xs"
+        class="absolute left-3 top-3 z-[1001] hidden rounded border border-slate-700 bg-slate-900 px-3 py-2 text-xs"
       >
-        Sidebar openen
+        <i class="fa-solid fa-bars mr-1"></i>Menu
       </button>
 
-      <div class="absolute right-3 top-3 z-[1001] flex w-[min(30rem,90vw)] flex-col gap-2">
-        <div class="rounded border border-slate-300 bg-white p-2 shadow-sm">
-          <input
-            id="searchInput"
-            type="text"
-            placeholder="Zoek locaties, winkels, adressen..."
-            class="w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
-          />
+      <aside
+        id="infoPanel"
+        class="absolute right-0 top-0 z-[1000] flex h-full w-[22rem] translate-x-full flex-col border-l border-slate-700 bg-slate-900/95 transition-transform"
+      >
+        <div class="flex items-center justify-between border-b border-slate-700 p-4">
+          <h2 id="infoTitle" class="text-base font-semibold"><i class="fa-solid fa-circle-info mr-2 text-cyan-400"></i>Place details</h2>
+          <button id="closeInfoPanel" class="rounded border border-slate-700 px-2 py-1 text-xs hover:bg-slate-800" title="Close details">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
-        <div id="searchResults" class="hidden max-h-64 overflow-auto rounded border border-slate-300 bg-white p-2 shadow-sm"></div>
-      </div>
+        <div id="infoContent" class="space-y-3 overflow-y-auto p-4 text-sm text-slate-200">
+          <p class="text-slate-400">Click on the map, a search result, or a shop marker to view details.</p>
+        </div>
+      </aside>
 
       <div id="map" class="h-full w-full"></div>
     </div>
@@ -87,6 +107,7 @@
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="/static/app.js"></script>
   </body>
 </html>
